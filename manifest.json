@@ -1,0 +1,9 @@
+{
+  "name": "Dog Sitting Tracker",
+  "short_name": "Dog Tracker",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": []
+}

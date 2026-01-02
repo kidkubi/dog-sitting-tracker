@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dog Sitting Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#020617" />
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f172a;
+      --card: #111827;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.15);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+    }
+    .app {
+      width: 100%;
+      max-width: 480px;
+      background: linear-gradient(145deg, #020617, #020617);
+      border-radius: 18px;
+      padding: 16px 16px 20px;
+      box-shadow:
+        0 18px 40px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(148, 163, 184, 0.1);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .badge {
+      font-size: 11px;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .section {
+      margin-bottom: 14px;
+      padding: 10px 10px 12px;
+      border-radius: 14px;
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 55%);
+      border: 1px solid rgba(15, 23, 42, 0.9);
+    }
+    .section h2 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+      color: var(--muted);
+    }
+    select, input, textarea, button {
+      width: 100%;
+      font-size: 14px;
+      border-radius: 10px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: var(--text);
+      padding: 9px 10px;
+      outline: none;
+    }
+    select:focus, input:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+      max-height: 160px;
+    }
+    .row {
+      display: flex;
+      gap: 8px;
+    }
+    .row > div {
+      flex: 1;
+    }
+    .btn-primary {
+      margin-top: 8px;
+      background: linear-gradient(135deg, #0ea5e9, #22c55e);
+      border: none;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 10px 12px;
+      box-shadow: 0 10px 22px rgba(34, 197, 94, 0.35);
+    }
+    .btn-primary:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+    }
+    .btn-secondary {
+      margin-top: 6px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      font-size: 12px;
+      padding: 7px 10px;
+      color: var(--muted);
+    }
+    .btn-danger {
+      margin-top: 6px;
+      background: rgba(127, 29, 29, 0.9);
+      border: 1px solid rgba(248, 113, 113, 0.4);
+      font-size: 12px;
+      padding: 7px 10px;
+      color: #fecaca;
+    }
+    .entries-list {
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-top: 4px;
+    }
+    .entry {
+      padding: 8px 8px 7px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(30, 64, 175, 0.6);
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    .entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+    .entry-date {
+      font-weight: 600;
+    }
+    .entry-paid {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .paid-yes {
+      background: rgba(16, 185, 129, 0.18);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.5);
+    }
+    .paid-no {
+      background: rgba(248, 113, 113, 0.16);
+      color: #fecaca;
+      border: 1px solid rgba(248, 113, 113, 0.5);
+    }
+    .entry-notes {
+      margin-top: 3px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .totals {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 6px;
+      font-size: 13px;
+    }
+    .chip {
+      flex: 1;
+      padding: 7px 9px;
+      border-radius: 11px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chip-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .chip-value {
+      font-weight: 600;
+    }
+    .month-summary {
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <div class="title">Dog Sitting Tracker</div>
+      <div class="badge">Offline · Local Only</div>
+    </div>
+
+    <div class="section">
+      <h2>Month & Week</h2>
+      <label for="monthSelect">Month</label>
+      <select id="monthSelect">
+        <option value="">Select month…</option>
+        <option value="1">January</option>
+        <option value="2">February</option>
+        <option value="3">March</option>
+        <option value="4">April</option>
+        <option value="5">May</option>
+        <option value="6">June</option>
+        <option value="7">July</option>
+        <option value="8">August</option>
+        <option value="9">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+      </select>
+
+      <div style="height: 8px;"></div>
+
+      <label for="weekSelect">Week</label>
+      <select id="weekSelect">
+        <option value="">Select week…</option>
+        <option value="1">Week 1 (days 1–7)</option>
+        <option value="2">Week 2 (8–14)</option>
+        <option value="3">Week 3 (15–21)</option>
+        <option value="4">Week 4 (22–28)</option>
+        <option value="5">Week 5 (29–31)</option>
+      </select>
+    </div>
+
+    <div class="section">
+      <h2>New Entry</h2>
+      <label for="dateInput">Date</label>
+      <input id="dateInput" type="text" placeholder="MM/DD/YYYY" />
+
+      <div class="row" style="margin-top: 6px;">
+        <div>
+          <label for="amountInput">Amount ($)</label>
+          <input id="amountInput" type="number" inputmode="decimal" placeholder="35" />
+        </div>
+        <div>
+          <label for="paidSelect">Paid?</label>
+          <select id="paidSelect">
+            <option value="">Select…</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+      </div>
+
+      <label for="notesInput" style="margin-top: 8px;">Notes</label>
+      <textarea id="notesInput" placeholder="Overnight, extra walk, etc."></textarea>
+
+      <button id="saveBtn" class="btn-primary">Save Entry</button>
+    </div>
+
+    <div class="section">
+      <h2>Entries</h2>
+      <div class="entries-list" id="entriesList">
+        <!-- entries go here -->
+      </div>
+      <div class="totals">
+        <div class="chip">
+          <div class="chip-label">Week Total</div>
+          <div class="chip-value" id="weekTotal">$0.00</div>
+        </div>
+        <div class="chip">
+          <div class="chip-label">Month Total</div>
+          <div class="chip-value" id="monthTotal">$0.00</div>
+        </div>
+      </div>
+      <div class="month-summary" id="monthSummary"></div>
+      <div class="footer-row">
+        <button id="exportBtn" class="btn-secondary">Export CSV</button>
+        <button id="clearBtn" class="btn-danger">Clear All</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'dogSittingEntries_v1';
+    let entries = [];
+
+    function loadEntries() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return parsed;
+        return [];
+      } catch (e) {
+        console.error('Failed to load entries', e);
+        return [];
+      }
+    }
+
+    function saveEntries() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    }
+
+    function formatMoney(n) {
+      return '$' + (Math.round(n * 100) / 100).toFixed(2);
+    }
+
+    function parseDateString(str) {
+      if (!str) return null;
+      const parts = str.split('/');
+      if (parts.length !== 3) return null;
+      const [m, d, y] = parts.map(p => parseInt(p, 10));
+      if (!m || !d || !y) return null;
+      return { year: y, month: m, day: d };
+    }
+
+    function getWeekFromDay(day) {
+      if (!day || day < 1) return null;
+      return Math.floor((day - 1) / 7) + 1; // 1..5
+    }
+
+    function render() {
+      const monthSelect = document.getElementById('monthSelect');
+      const weekSelect = document.getElementById('weekSelect');
+      const entriesList = document.getElementById('entriesList');
+      const weekTotalEl = document.getElementById('weekTotal');
+      const monthTotalEl = document.getElementById('monthTotal');
+      const monthSummary = document.getElementById('monthSummary');
+
+      const monthVal = parseInt(monthSelect.value, 10) || null;
+      const weekVal = parseInt(weekSelect.value, 10) || null;
+
+      entriesList.innerHTML = '';
+
+      let monthTotal = 0;
+      let weekTotal = 0;
+      let monthCount = 0;
+      let weekCount = 0;
+
+      const sorted = [...entries].sort((a, b) => {
+        // sort by year, month, day
+        if (a.year !== b.year) return a.year - b.year;
+        if (a.month !== b.month) return a.month - b.month;
+        return a.day - b.day;
+      });
+
+      for (const e of sorted) {
+        const inMonth = monthVal ? e.month === monthVal : true;
+        if (!inMonth) continue;
+
+        monthTotal += e.amount;
+        monthCount++;
+
+        const weekOfEntry = getWeekFromDay(e.day);
+        const inWeek = weekVal ? weekOfEntry === weekVal : true;
+
+        if (inWeek) {
+          weekTotal += e.amount;
+          weekCount++;
+
+          const wrapper = document.createElement('div');
+          wrapper.className = 'entry';
+
+          const header = document.createElement('div');
+          header.className = 'entry-header';
+
+          const dateSpan = document.createElement('div');
+          dateSpan.className = 'entry-date';
+          dateSpan.textContent = `${String(e.month).padStart(2, '0')}/${String(e.day).padStart(2, '0')}/${e.year}`;
+
+          const paidBadge = document.createElement('div');
+          paidBadge.className = 'entry-paid ' + (e.paid === 'Yes' ? 'paid-yes' : 'paid-no');
+          paidBadge.textContent = e.paid === 'Yes' ? 'Paid' : 'Not Paid';
+
+          header.appendChild(dateSpan);
+          header.appendChild(paidBadge);
+
+          const amountLine = document.createElement('div');
+          amountLine.textContent = formatMoney(e.amount);
+
+          wrapper.appendChild(header);
+          wrapper.appendChild(amountLine);
+
+          if (e.notes && e.notes.trim() !== '') {
+            const notes = document.createElement('div');
+            notes.className = 'entry-notes';
+            notes.textContent = e.notes;
+            wrapper.appendChild(notes);
+          }
+
+          entriesList.appendChild(wrapper);
+        }
+      }
+
+      weekTotalEl.textContent = formatMoney(weekTotal);
+      monthTotalEl.textContent = formatMoney(monthTotal);
+
+      if (monthVal) {
+        monthSummary.textContent =
+          `Month entries: ${monthCount} · Week entries: ${weekCount}`;
+      } else {
+        monthSummary.textContent = 'Select a month to see totals.';
+      }
+    }
+
+    function onSaveEntry() {
+      const monthSelect = document.getElementById('monthSelect');
+      const weekSelect = document.getElementById('weekSelect');
+      const dateInput = document.getElementById('dateInput');
+      const amountInput = document.getElementById('amountInput');
+      const paidSelect = document.getElementById('paidSelect');
+      const notesInput = document.getElementById('notesInput');
+
+      const monthVal = parseInt(monthSelect.value, 10);
+      const weekVal = parseInt(weekSelect.value, 10);
+      const dateStr = dateInput.value.trim();
+      const amountStr = amountInput.value.trim();
+      const paidVal = paidSelect.value;
+      const notesVal = notesInput.value.trim();
+
+      if (!monthVal) {
+        alert('Please select a month first.');
+        return;
+      }
+      if (!dateStr) {
+        alert('Please enter a date (MM/DD/YYYY).');
+        return;
+      }
+      if (!amountStr) {
+        alert('Please enter an amount.');
+        return;
+      }
+
+      const parsed = parseDateString(dateStr);
+      if (!parsed) {
+        alert('Please use date format MM/DD/YYYY (e.g. 01/05/2026).');
+        return;
+      }
+
+      if (parsed.month !== monthVal) {
+        if (!confirm('The month you selected and the month in the date do not match. Save anyway?')) {
+          return;
+        }
+      }
+
+      const amount = parseFloat(amountStr);
+      if (isNaN(amount)) {
+        alert('Amount must be a number.');
+        return;
+      }
+
+      const entry = {
+        year: parsed.year,
+        month: parsed.month,
+        week: weekVal || getWeekFromDay(parsed.day),
+        day: parsed.day,
+        amount,
+        paid: paidVal || 'No',
+        notes: notesVal
+      };
+
+      entries.push(entry);
+      saveEntries();
+
+      // Clear inputs (month/week stay selected)
+      dateInput.value = '';
+      amountInput.value = '';
+      paidSelect.value = '';
+      notesInput.value = '';
+
+      render();
+    }
+
+    function onExportCSV() {
+      if (!entries.length) {
+        alert('No entries to export yet.');
+        return;
+      }
+      const header = 'Year,Month,Week,Day,Amount,Paid,Notes\n';
+      const lines = entries.map(e => {
+        const safeNotes = (e.notes || '').replace(/"/g, '""');
+        return `${e.year},${e.month},${e.week || ''},${e.day},${e.amount},"${e.paid}","${safeNotes}"`;
+      });
+      const csv = header + lines.join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'dog_sitting_tracker.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function onClearAll() {
+      if (!entries.length) {
+        alert('Nothing to clear.');
+        return;
+      }
+      if (!confirm('Clear all entries? This cannot be undone.')) return;
+      entries = [];
+      saveEntries();
+      render();
+    }
+
+    // Init
+    window.addEventListener('DOMContentLoaded', () => {
+      entries = loadEntries();
+      document.getElementById('saveBtn').addEventListener('click', onSaveEntry);
+      document.getElementById('exportBtn').addEventListener('click', onExportCSV);
+      document.getElementById('clearBtn').addEventListener('click', onClearAll);
+      document.getElementById('monthSelect').addEventListener('change', render);
+      document.getElementById('weekSelect').addEventListener('change', render);
+      render();
+    });
+  </script>
+</body>
+</html>
