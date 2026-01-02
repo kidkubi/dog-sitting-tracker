@@ -147,6 +147,7 @@
       border: 1px solid rgba(30, 64, 175, 0.6);
       margin-bottom: 6px;
       font-size: 13px;
+      cursor: pointer;
     }
     .entry-header {
       display: flex;
@@ -216,6 +217,11 @@
       gap: 8px;
       margin-top: 8px;
     }
+    .hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
   </style>
 </head>
 <body>
@@ -246,15 +252,16 @@
 
       <div style="height: 8px;"></div>
 
-      <label for="weekSelect">Week</label>
+      <label for="weekSelect">Week (optional)</label>
       <select id="weekSelect">
-        <option value="">Select week…</option>
+        <option value="">All weeks in month</option>
         <option value="1">Week 1 (days 1–7)</option>
         <option value="2">Week 2 (8–14)</option>
         <option value="3">Week 3 (15–21)</option>
         <option value="4">Week 4 (22–28)</option>
         <option value="5">Week 5 (29–31)</option>
       </select>
+      <div class="hint">Leave week on “All weeks in month” to see the full month.</div>
     </div>
 
     <div class="section">
@@ -265,7 +272,7 @@
       <div class="row" style="margin-top: 6px;">
         <div>
           <label for="amountInput">Amount ($)</label>
-          <input id="amountInput" type="number" inputmode="decimal" placeholder="35" />
+          <input id="amountInput" type="number" inputmode="decimal" placeholder="25" />
         </div>
         <div>
           <label for="paidSelect">Paid?</label>
@@ -284,7 +291,7 @@
     </div>
 
     <div class="section">
-      <h2>Entries</h2>
+      <h2>Entries (tap to toggle paid/unpaid)</h2>
       <div class="entries-list" id="entriesList">
         <!-- entries go here -->
       </div>
@@ -345,6 +352,14 @@
       return Math.floor((day - 1) / 7) + 1; // 1..5
     }
 
+    function togglePaid(index) {
+      const e = entries[index];
+      if (!e) return;
+      e.paid = e.paid === 'Yes' ? 'No' : 'Yes';
+      saveEntries();
+      render();
+    }
+
     function render() {
       const monthSelect = document.getElementById('monthSelect');
       const weekSelect = document.getElementById('weekSelect');
@@ -363,12 +378,14 @@
       let monthCount = 0;
       let weekCount = 0;
 
-      const sorted = [...entries].sort((a, b) => {
-        // sort by year, month, day
-        if (a.year !== b.year) return a.year - b.year;
-        if (a.month !== b.month) return a.month - b.month;
-        return a.day - b.day;
-      });
+      // keep original index so we can edit specific entries
+      const sorted = entries
+        .map((e, idx) => ({ ...e, _i: idx }))
+        .sort((a, b) => {
+          if (a.year !== b.year) return a.year - b.year;
+          if (a.month !== b.month) return a.month - b.month;
+          return a.day - b.day;
+        });
 
       for (const e of sorted) {
         const inMonth = monthVal ? e.month === monthVal : true;
@@ -386,16 +403,19 @@
 
           const wrapper = document.createElement('div');
           wrapper.className = 'entry';
+          wrapper.dataset.index = e._i;
 
           const header = document.createElement('div');
           header.className = 'entry-header';
 
           const dateSpan = document.createElement('div');
           dateSpan.className = 'entry-date';
-          dateSpan.textContent = `${String(e.month).padStart(2, '0')}/${String(e.day).padStart(2, '0')}/${e.year}`;
+          dateSpan.textContent =
+            `${String(e.month).padStart(2, '0')}/${String(e.day).padStart(2, '0')}/${e.year}`;
 
           const paidBadge = document.createElement('div');
-          paidBadge.className = 'entry-paid ' + (e.paid === 'Yes' ? 'paid-yes' : 'paid-no');
+          paidBadge.className =
+            'entry-paid ' + (e.paid === 'Yes' ? 'paid-yes' : 'paid-no');
           paidBadge.textContent = e.paid === 'Yes' ? 'Paid' : 'Not Paid';
 
           header.appendChild(dateSpan);
@@ -414,6 +434,11 @@
             wrapper.appendChild(notes);
           }
 
+          // tap entry to toggle paid/unpaid
+          wrapper.addEventListener('click', () => {
+            togglePaid(e._i);
+          });
+
           entriesList.appendChild(wrapper);
         }
       }
@@ -421,7 +446,10 @@
       weekTotalEl.textContent = formatMoney(weekTotal);
       monthTotalEl.textContent = formatMoney(monthTotal);
 
-      if (monthVal) {
+      if (monthVal && !weekVal) {
+        monthSummary.textContent =
+          `Showing all entries for this month · Entries: ${monthCount}`;
+      } else if (monthVal && weekVal) {
         monthSummary.textContent =
           `Month entries: ${monthCount} · Week entries: ${weekCount}`;
       } else {
@@ -464,7 +492,7 @@
       }
 
       if (parsed.month !== monthVal) {
-        if (!confirm('The month you selected and the month in the date do not match. Save anyway?')) {
+        if (!confirm('The selected month and the month in the date do not match. Save anyway?')) {
           return;
         }
       }
@@ -543,3 +571,4 @@
   </script>
 </body>
 </html>
+
