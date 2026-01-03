@@ -180,6 +180,28 @@
       font-size: 12px;
       color: var(--muted);
     }
+    .entry-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .entry-action-btn {
+      flex: 0 0 auto;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      background: rgba(15, 23, 42, 0.9);
+      color: var(--muted);
+    }
+    .entry-action-btn.edit-btn {
+      border-color: rgba(56, 189, 248, 0.7);
+      color: #e0f2fe;
+    }
+    .entry-action-btn.delete-btn {
+      border-color: rgba(248, 113, 113, 0.7);
+      color: #fecaca;
+    }
     .totals {
       display: flex;
       justify-content: space-between;
@@ -291,7 +313,7 @@
     </div>
 
     <div class="section">
-      <h2>Entries (tap to toggle paid/unpaid)</h2>
+      <h2>Entries (tap card to toggle paid)</h2>
       <div class="entries-list" id="entriesList">
         <!-- entries go here -->
       </div>
@@ -360,6 +382,55 @@
       render();
     }
 
+    function editEntry(index) {
+      const e = entries[index];
+      if (!e) return;
+
+      const currentDate = `${String(e.month).padStart(2, '0')}/${String(e.day).padStart(2, '0')}/${e.year}`;
+      const newDate = prompt('Edit date (MM/DD/YYYY):', currentDate);
+      if (newDate === null) return; // cancel
+      const parsed = parseDateString(newDate.trim());
+      if (!parsed) {
+        alert('Please use date format MM/DD/YYYY.');
+        return;
+      }
+
+      const newAmountStr = prompt('Edit amount ($):', e.amount);
+      if (newAmountStr === null) return;
+      const newAmount = parseFloat(newAmountStr);
+      if (isNaN(newAmount)) {
+        alert('Amount must be a number.');
+        return;
+      }
+
+      const newPaid = prompt('Paid? Type Yes or No:', e.paid || 'No');
+      if (newPaid === null) return;
+      const paidClean = (newPaid.trim().toLowerCase() === 'yes') ? 'Yes' : 'No';
+
+      const newNotes = prompt('Edit notes:', e.notes || '');
+      if (newNotes === null) return;
+
+      e.year = parsed.year;
+      e.month = parsed.month;
+      e.day = parsed.day;
+      e.week = getWeekFromDay(parsed.day);
+      e.amount = newAmount;
+      e.paid = paidClean;
+      e.notes = newNotes;
+
+      saveEntries();
+      render();
+    }
+
+    function deleteEntry(index) {
+      const e = entries[index];
+      if (!e) return;
+      if (!confirm('Delete this entry? This cannot be undone.')) return;
+      entries.splice(index, 1);
+      saveEntries();
+      render();
+    }
+
     function render() {
       const monthSelect = document.getElementById('monthSelect');
       const weekSelect = document.getElementById('weekSelect');
@@ -378,7 +449,6 @@
       let monthCount = 0;
       let weekCount = 0;
 
-      // keep original index so we can edit specific entries
       const sorted = entries
         .map((e, idx) => ({ ...e, _i: idx }))
         .sort((a, b) => {
@@ -434,10 +504,34 @@
             wrapper.appendChild(notes);
           }
 
-          // tap entry to toggle paid/unpaid
+          // tap card toggles paid/unpaid
           wrapper.addEventListener('click', () => {
             togglePaid(e._i);
           });
+
+          // edit/delete buttons
+          const actions = document.createElement('div');
+          actions.className = 'entry-actions';
+
+          const editBtn = document.createElement('button');
+          editBtn.textContent = 'Edit';
+          editBtn.className = 'entry-action-btn edit-btn';
+          editBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation(); // don't toggle paid
+            editEntry(e._i);
+          });
+
+          const deleteBtn = document.createElement('button');
+          deleteBtn.textContent = 'Delete';
+          deleteBtn.className = 'entry-action-btn delete-btn';
+          deleteBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation(); // don't toggle paid
+            deleteEntry(e._i);
+          });
+
+          actions.appendChild(editBtn);
+          actions.appendChild(deleteBtn);
+          wrapper.appendChild(actions);
 
           entriesList.appendChild(wrapper);
         }
@@ -526,26 +620,27 @@
     }
 
     function onExportCSV() {
-      if (!entries.length) {
-        alert('No entries to export yet.');
-        return;
-      }
-      const header = 'Year,Month,Week,Day,Amount,Paid,Notes\n';
-      const lines = entries.map(e => {
-        const safeNotes = (e.notes || '').replace(/"/g, '""');
-        return `${e.year},${e.month},${e.week || ''},${e.day},${e.amount},"${e.paid}","${safeNotes}"`;
-      });
-      const csv = header + lines.join('\n');
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'dog_sitting_tracker.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
+  if (!entries.length) {
+    alert('No entries to export yet.');
+    return;
+  }
+  const header = 'Year,Month,Week,Day,Amount,Paid,Notes\n';
+  const lines = entries.map(e => {
+    const safeNotes = (e.notes || '').replace(/"/g, '""');
+    return `${e.year},${e.month},${e.week || ''},${e.day},${e.amount},"${e.paid}","${safeNotes}"`;
+  });
+  const csv = header + lines.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'dog_sitting_tracker.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 
     function onClearAll() {
       if (!entries.length) {
@@ -571,4 +666,5 @@
   </script>
 </body>
 </html>
+
 
